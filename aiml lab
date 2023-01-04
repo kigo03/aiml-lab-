@@ -1,0 +1,419 @@
+PROGRAM 1
+from heuristicsearch.a_star_search import AStar
+graph_nodes = {
+'A': [('B', 6), ('F', 3)],
+'B': [('C', 3), ('D', 2)],
+'C': [('D', 1), ('E', 5)],
+'D': [('C', 1), ('E', 8)],
+'E': [('I', 5), ('J', 5)],
+'F': [('G', 1),('H', 7)] ,
+'G': [('I', 3)],
+'H': [('I', 2)],
+'I': [('E', 5), ('J', 3)],
+}
+heuristics = {
+'A': 10,
+'B': 8,
+'C': 5,
+'D': 7,
+'E': 3,
+'F': 6,
+'G': 5,
+'H': 3,
+'I': 1,
+'J': 0
+}
+graph= AStar(graph_nodes,heuristics)
+graph.apply_a_star(start='A', stop='J')
+
+PROGRAM 2
+from heuristicsearch.ao_star import AOStar
+print("Graph-1")
+heuristic = {'S': 1, 'A': 7, 'B': 12, 'C': 13, 'D': 5, 'E': 6, 'F': 5, 'G': 7, 'H': 2,}
+adjacency_matrix = {
+'S': [[('A', 1), ('B', 1)], [('C', 1)]],
+'A': [[('D', 1)], [('E', 1)]],
+'C': [[('F', 1), ('G', 1)]],
+'D': [('H', 1)]
+}
+graph=AOStar(adjacency_matrix,heuristic,'S')
+graph.applyAOStar()
+
+PROGRAM 3
+import csv
+a=[]
+with open("enjoysport.csv","r") as csvfile:
+fdata=csv.reader(csvfile)
+for row in fdata:
+a.append(row)
+print(row)
+num_att=len(a[0])-1
+S=['0']*num_att
+G=['?']*num_att
+print(S)
+print(G)
+temp=[]
+for i in range(0,num_att):
+S[i]=a[0][i]
+print("................................................")
+for i in range(0,len(a)):
+
+if a[i][num_att]=="Yes":
+for j in range(0,num_att):
+if S[j]!=a[i][j]:
+S[j]='?'
+for j in range(0,num_att):
+for k in range(0,len(temp)):
+if temp[k][j]!=S[j] and temp[k][j]!='?':
+del temp[k]
+if a[i][num_att]=='No':
+ for j in range(0,num_att):
+if a[i][j]!=S[j] and S[j]!='?':
+ 	G[j]=S[j]
+ 	temp.append(G)
+ 	G=['?']*num_att
+print(S)
+if len(temp)==0:
+print(G)
+else:
+print(temp)
+print("......................................................................")
+
+
+PROGRAM 4
+import pandas as pd
+import math
+df = pd.read_csv('/Users/Documents/Python Scripts/PlayTennis.csv')
+print("\n Input Data Set is:\n", df)
+t = df.keys()[-1]
+print('Target Attribute is: ', t)
+attribute_names = list(df.keys())
+attribute_names.remove(t)
+print('Predicting Attributes: ', attribute_names)
+def entropy(probs):
+
+return sum( [-prob*math.log(prob, 2) for prob in probs])
+def entropy_of_list(ls,value):
+from collections import Counter
+cnt = Counter(x for x in ls)# Counter calculates the propotion of class
+print('Target attribute class count(Yes/No)=',dict(cnt))
+total_instances = len(ls)
+print("Total no of instances/records associated with {0} is: {1}".format(value,total_instances ))
+probs = [x / total_instances for x in cnt.values()] # x means no of YES/NO
+print("Probability of Class {0} is: {1:.4f}".format(min(cnt),min(probs)))
+print("Probability of Class {0} is: {1:.4f}".format(max(cnt),max(probs)))
+return entropy(probs) # Call Entropy
+def information_gain(df, split_attribute, target_attribute,battr):
+print("\n\n-----Information Gain Calculation of ",split_attribute, " --------")
+df_split = df.groupby(split_attribute) # group the data based on attribute values
+glist=[]
+for gname,group in df_split:
+print('Grouped Attribute Values \n',group)
+glist.append(gname)
+glist.reverse()
+nobs = len(df.index) * 1.0
+df_agg1=df_split.agg({target_attribute:lambda x:entropy_of_list(x, glist.pop())})
+df_agg2=df_split.agg({target_attribute :lambda x:len(x)/nobs})
+df_agg1.columns=['Entropy']
+df_agg2.columns=['Proportion']
+new_entropy = sum( df_agg1['Entropy'] * df_agg2['Proportion'])
+if battr !='S':
+old_entropy = entropy_of_list(df[target_attribute],'S-'+df.iloc[0][df.columns.get_loc(battr)])
+else:
+old_entropy = entropy_of_list(df[target_attribute],battr)
+return old_entropy - new_entropy
+
+def id3(df, target_attribute, attribute_names, default_class=None,default_attr='S'):
+from collections import Counter
+cnt = Counter(x for x in df[target_attribute])# class of YES /NO
+if len(cnt) == 1:
+return next(iter(cnt)) # next input data set, or raises StopIteration when EOF is hit.
+elif df.empty or (not attribute_names):
+return default_class # Return None for Empty Data Set
+
+else:
+default_class = max(cnt.keys()) #No of YES and NO Class
+gainz=[]
+for attr in attribute_names:
+ig= information_gain(df, attr, target_attribute,default_attr)
+gainz.append(ig)
+print('Information gain of ',attr,' is : ',ig)
+index_of_max = gainz.index(max(gainz))
+best_attr = attribute_names[index_of_max
+print("\nAttribute with the maximum gain is: ", best_attr)
+tree = {best_attr:{}} # Initiate the tree with best attribute as a node
+remaining_attribute_names =[i for i in attribute_names if i != best_attr]
+subtrees, which
+for attr_val, data_subset in df.groupby(best_attr):
+subtree = id3(data_subset,target_attribute,
+remaining_attribute_names,default_class,best_attr)
+tree[best_attr][attr_val] = subtree
+return tree
+from pprint import pprint
+tree = id3(df,t,attribute_names)
+print("\nThe Resultant Decision Tree is:")
+print(tree)
+def classify(instance, tree,default=None): # Instance of Play Tennis with Predicted
+attribute = next(iter(tree)) # Outlook/Humidity/Wind
+if instance[attribute] in tree[attribute].keys(): # Value of the attributs in set of Tree keys
+result = tree[attribute][instance[attribute]]
+if isinstance(result, dict): # this is a tree, delve deeper
+return classify(instance, result)
+else:
+return result # this is a label
+else:
+return default
+df_new=pd.read_csv('/Users/Documents/Python Scripts/PlayTennisTest.csv')
+df_new['predicted'] = df_new.apply(classify, axis=1, args=(tree,'?'))
+print(df_new)
+
+
+PROGRAM 5
+import numpy as np
+X = np.array(([2, 9], [1, 5], [3, 6]))
+y = np.array(([92], [86], [89]))
+y = y/100
+def sigmoid(x):
+return 1/(1 + np.exp(-x))
+def derivatives_sigmoid(x):
+return x * (1 - x)
+epoch=10000
+
+lr=0.1
+inputlayer_neurons = 2
+hiddenlayer_neurons = 3
+output_neurons = 1
+wh=np.random.uniform(size=(inputlayer_neurons,hiddenlayer_neurons))
+bias_hidden=np.random.uniform(size=(1,hiddenlayer_neurons))
+weight_hidden=np.random.uniform(size=(hiddenlayer_neurons,output_neurons))
+bias_output=np.random.uniform(size=(1,output_neurons))
+for i in range(epoch):
+hinp1=np.dot(X,wh)
+hinp= hinp1 + bias_hidden
+hlayer_activation = sigmoid(hinp)
+outinp1=np.dot(hlayer_activation,weight_hidden)
+outinp= outinp1+ bias_output
+output = sigmoid(outinp)
+EO = y-output
+outgrad = derivatives_sigmoid(output)
+d_output = EO * outgrad
+EH = d_output.dot(weight_hidden.T)
+hiddengrad = derivatives_sigmoid(hlayer_activation)
+d_hiddenlayer = EH * hiddengrad
+weight_hidden += hlayer_activation.T.dot(d_output) *lr
+bias_hidden += np.sum(d_hiddenlayer, axis=0,keepdims=True) *lr
+wh += X.T.dot(d_hiddenlayer) *lr
+bias_output += np.sum(d_output, axis=0,keepdims=True) *lr
+print("Input: \n" + str(X))
+print("Actual Output: \n" + str(y))
+print("Predicted Output: \n" ,output)
+
+
+PROGRAM 6
+import numpy as np
+import math
+import csv
+import pdb
+def read_data(filename):
+with open(filename,'r') as csvfile:
+datareader = csv.reader(csvfile)
+metadata = next(datareader)
+traindata=[]
+for row in datareader:
+traindata.append(row)
+return (metadata, traindata)
+def splitDataset(dataset, splitRatio):
+trainSize = int(len(dataset) * splitRatio)
+trainSet = []
+testset = list(dataset)
+i=0
+while len(trainSet) < trainSize:
+trainSet.append(testset.pop(i))
+return [trainSet, testset]
+
+def classify(data,test):
+total_size = data.shape[0]
+print("\n")
+print("training data size=",total_size)
+print("test data size=",test.shape[0])
+countYes = 0
+countNo = 0
+probYes = 0
+probNo = 0
+print("\n")
+print("target count probability")
+for x in range(data.shape[0]):
+if data[x,data.shape[1]-1] == 'yes':
+countYes +=1
+if data[x,data.shape[1]-1] == 'no':
+countNo +=1
+probYes=countYes/total_size
+probNo= countNo / total_size
+print('Yes',"\t",countYes,"\t",probYes)
+print('No',"\t",countNo,"\t",probNo)
+
+prob0 =np.zeros((test.shape[1]-1))
+prob1 =np.zeros((test.shape[1]-1))
+accuracy=0
+print("\n")
+print("instance prediction target")
+for t in range(test.shape[0]):
+for k in range (test.shape[1]-1):
+count1=count0=0
+for j in range (data.shape[0]):
+if test[t,k] == data[j,k] and data[j,data.shape[1]-1]=='no':
+count0+=1
+if test[t,k]==data[j,k] and data[j,data.shape[1]-1]=='yes':
+count1+=1
+prob0[k]=count0/countNo
+prob1[k]=count1/countYes
+probno=probNo
+probyes=probYes
+for i in range(test.shape[1]-1):
+probno=probno*prob0[i]
+
+probyes=probyes*prob1[i]
+if probno>probyes:
+predict='no'
+else:
+predict='yes'
+print(t+1,"\t",predict,"\t ",test[t,test.shape[1]-1])
+if predict == test[t,test.shape[1]-1]:
+accuracy+=1
+final_accuracy=(accuracy/test.shape[0])*100
+print("accuracy",final_accuracy,"%")
+return
+metadata,traindata= read_data("/Users/Chachu/Documents/Python Scripts/tennis.csv")
+splitRatio=0.6
+trainingset, testset=splitDataset(traindata, splitRatio)
+training=np.array(trainingset)
+print("\n The Training data set are:")
+for x in trainingset:
+print(x)
+testing=np.array(testset)
+print("\n The Test data set are:")
+for x in testing:
+print(x)
+classify(training,testing)
+
+PROGRAM 7
+import matplotlib.pyplot as plt
+from sklearn import datasets
+from sklearn.cluster import KMeans
+import pandas as pd
+import numpy as np
+iris = datasets.load_iris()
+X = pd.DataFrame(iris.data)
+X.columns = ['Sepal_Length','Sepal_Width','Petal_Length','Petal_Width']
+y = pd.DataFrame(iris.target)
+y.columns = ['Targets']
+model = KMeans(n_clusters=3)
+model.fit(X) # model.labels_ : Gives cluster no for which samples belongs to
+plt.figure(figsize=(14,14))
+colormap = np.array(['red', 'lime', 'black'])
+plt.subplot(2, 2, 1)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[y.Targets], s=40)
+plt.title('Real Clusters')
+plt.xlabel('Petal Length')
+plt.ylabel('Petal Width')
+plt.subplot(2, 2, 2)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[model.labels_], s=40)
+plt.title('K-Means Clustering')
+plt.xlabel('Petal Length')
+plt.ylabel('Petal Width')
+from sklearn import preprocessing
+deviation of 1.
+scaler = preprocessing.StandardScaler()
+scaler.fit(X)
+xsa = scaler.transform(X)
+xs = pd.DataFrame(xsa, columns = X.columns)
+from sklearn.mixture import GaussianMixture
+gmm = GaussianMixture(n_components=3)
+gmm.fit(xs)
+gmm_y = gmm.predict(xs)
+plt.subplot(2, 2, 3)
+plt.scatter(X.Petal_Length, X.Petal_Width, c=colormap[gmm_y], s=40)
+
+plt.title('GMM Clustering')
+plt.xlabel('Petal Length')
+plt.ylabel('Petal Width')
+print('Observation: The GMM using EM algorithm based clustering matched the true labels
+more closely than the Kmeans.')
+
+
+PROGRAM 8
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import datasets
+# Load dataset
+iris=datasets.load_iris()
+print("Iris Data set loaded...")
+# Split the data into train and test samples
+x_train, x_test, y_train, y_test = train_test_split(iris.data,iris.target,test_size=0.1)
+print("Dataset is split into training and testing...")
+print("Size of trainng data and its label",x_train.shape,y_train.shape)
+print("Size of trainng data and its label",x_test.shape, y_test.shape)
+# Prints Label no. and their names
+for i in range(len(iris.target_names)):
+print("Label", i , "-",str(iris.target_names[i]))
+# Create object of KNN classifier
+classifier = KNeighborsClassifier(n_neighbors=1)
+
+# Perform Training
+classifier.fit(x_train, y_train) # Perform testing
+y_pred=classifier.predict(x_test)
+# Display the results
+print("Results of Classification using K-nn with K=1 ")
+for r in range(0,len(x_test)):
+print(" Sample:", str(x_test[r]), " Actual-label:", str(y_test[r]), " Predicted-label:", str(y_pred[r]))
+print("Classification Accuracy :" , classifier.score(x_test,y_test));
+from sklearn.metrics import classification_report, confusion_matrix
+print('Confusion Matrix')
+print(confusion_matrix(y_test,y_pred))
+print('Accuracy Metrics')
+print(classification_report(y_test,y_pred))
+
+
+PROGRAM 9
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+def kernel(point,xmat, k):
+m,n = np.shape(xmat)
+weights = np.mat(np.eye((m))) # eye - identity matrix
+for j in range(m):
+diff = point - X[j]
+weights[j,j] = np.exp(diff*diff.T/(-2.0*k**2))
+return weights
+def localWeight(point,xmat,ymat,k):
+wei = kernel(point,xmat,k)
+W = (X.T*(wei*X)).I*(X.T*(wei*ymat.T))
+return W
+def localWeightRegression(xmat,ymat,k):
+m,n = np.shape(xmat)
+ypred = np.zeros(m)
+for i in range(m):
+ypred[i] = xmat[i]*localWeight(xmat[i],xmat,ymat,k)
+return ypred
+def graphPlot(X,ypred):
+sortindex = X[:,1].argsort(0) #argsort - index of the smallest
+xsort = X[sortindex][:,0]
+
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+ax.scatter(bill,tip, color='green')
+ax.plot(xsort[:,1],ypred[sortindex], color = 'red', linewidth=5)
+plt.xlabel('Total bill')
+plt.ylabel('Tip')
+plt.show();
+# load data points
+data = pd.read_csv('/Users/Chachu/Documents/Python Scripts/data10_tips.csv')
+bill = np.array(data.total_bill) # We use only Bill amount and Tips data
+tip = np.array(data.tip)
+mbill = np.mat(bill) # .mat will convert nd array is converted in 2D array
+mtip = np.mat(tip)
+m= np.shape(mbill)[1]
+one = np.mat(np.ones(m))
+X = np.hstack((one.T,mbill.T)) # 244 rows, 2 cols
+ypred = localWeightRegression(X,mtip,2) # increase k to get smooth curves
+graphPlot(X,ypred)
